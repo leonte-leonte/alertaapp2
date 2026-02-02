@@ -1,0 +1,50 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:  # Permite pornirea manuala de la buton
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # 1. Curatam spatiu pe disc (Critic pentru Android builds)
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: false
+          dotnet: false
+          haskell: false
+          large-packages: false
+          docker-images: false
+          swap-storage: false
+
+      # 2. Instalam dependentele de sistem (Linux)
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pip build-essential git python3 python3-dev ffmpeg \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev \
+            zlib1g-dev libgstreamer1.0 gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good libltdl-dev libffi-dev libssl-dev \
+            autoconf automake libtool zip unzip
+
+      # 3. Instalam Buildozer
+      - name: Install Buildozer
+        run: pip3 install buildozer cython==0.29.33
+
+      # 4. Compilam APK-ul (Yes accepta automat licentele)
+      - name: Build with Buildozer
+        run: yes | buildozer android debug
+
+      # 5. Salvam APK-ul rezultat ca sa il poti descarca
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: alerta-sala-apk
+          path: bin/*.apk
